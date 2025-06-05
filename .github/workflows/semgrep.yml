@@ -1,0 +1,37 @@
+name: Semgrep Scala Scan
+
+on:
+  workflow_dispatch:
+
+jobs:
+  semgrep-scala:
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep
+
+    steps:
+      # step 1
+      - name: clone application source code
+        uses: actions/checkout@v4
+
+      # step 2
+      - name: scala scan
+        run: |
+          semgrep \
+            --sarif --output report.sarif \
+            --metrics=off \
+            --config="p/scala"
+
+      # step 3
+      - name: save report as pipeline artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: report.sarif
+          path: report.sarif
+
+      # step 4
+      - name: publish code scanning alerts
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: report.sarif
+          category: semgrep-scala
